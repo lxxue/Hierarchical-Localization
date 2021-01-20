@@ -53,7 +53,7 @@ def main(conf, pairs, features, export_dir, exhaustive=False):
             pair_list = f.read().rstrip('\n').split('\n')
     elif exhaustive:
         logging.info(f'Writing exhaustive match pairs to {pairs}.')
-        assert not pairs.exists(), pairs
+        # assert not pairs.exists(), pairs
 
         # get the list of images from the feature file
         images = []
