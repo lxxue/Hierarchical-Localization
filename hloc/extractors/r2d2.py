@@ -37,7 +37,8 @@ class R2D2(BaseModel):
         model_fn = r2d2_path / "models" / conf['checkpoint_name']
         self.net = load_network(model_fn)
         # TODO: configure the parameters here
-        self.detector = NonMaxSuppression(rel_thr=-1, rep_thr=-1)
+        self.detector = NonMaxSuppression(rel_thr=conf['reliability-thr'],
+                rep_thr=conf['repetability-thr'])
         
     def _forward(self, data):
         # data is a dict containing 'name', 'image', and 'original_size'
