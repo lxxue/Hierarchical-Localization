@@ -35,7 +35,8 @@ def plot_images(imgs, titles=None, cmaps='gray', dpi=100, pad=.5,
         ratios = [i.shape[1] / i.shape[0] for i in imgs]  # W / H
     else:
         ratios = [4/3] * n
-    figsize = [sum(ratios)*4.5, 4.5]
+    figsize = [sum(ratios)*4.5, 5]
+    # figsize = [sum(ratios)*9, 9]
     fig, ax = plt.subplots(
         1, n, figsize=figsize, dpi=dpi, gridspec_kw={'width_ratios': ratios})
     if n == 1:
