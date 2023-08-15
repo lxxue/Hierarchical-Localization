@@ -1,21 +1,22 @@
 import argparse
-import torch
-from pathlib import Path
-from typing import Dict, List, Union, Optional
-import h5py
-from types import SimpleNamespace
-import cv2
-import numpy as np
-from tqdm import tqdm
-import pprint
 import collections.abc as collections
+import glob
+import pprint
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Dict, List, Optional, Union
+
+import cv2
+import h5py
+import numpy as np
 import PIL.Image
+import torch
+from tqdm import tqdm
 
 from . import extractors, logger
 from .utils.base_model import dynamic_load
+from .utils.io import list_h5_names, read_image
 from .utils.parsers import parse_image_lists
-from .utils.io import read_image, list_h5_names
-
 
 """
 A set of standard configurations that can be directly selected from the command
@@ -171,12 +172,13 @@ class ImageDataset(torch.utils.data.Dataset):
         if paths is None:
             paths = []
             for g in conf.globs:
-                paths += list(Path(root).glob("**/" + g))
+                paths += glob.glob(
+                    (Path(root) / '**' / g).as_posix(), recursive=True)
             if len(paths) == 0:
-                raise ValueError(f"Could not find any image in root: {root}.")
-            paths = sorted(list(set(paths)))
-            self.names = [i.relative_to(root).as_posix() for i in paths]
-            logger.info(f"Found {len(self.names)} images in root {root}.")
+                raise ValueError(f'Could not find any image in root: {root}.')
+            paths = sorted(set(paths))
+            self.names = [Path(p).relative_to(root).as_posix() for p in paths]
+            logger.info(f'Found {len(self.names)} images in root {root}.')
         else:
             if isinstance(paths, (Path, str)):
                 self.names = parse_image_lists(paths)

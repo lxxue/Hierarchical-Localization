@@ -1,10 +1,10 @@
 # hloc - the hierarchical localization toolbox
 
-This is `hloc`, a modular toolbox for state-of-the-art 6-DoF visual localization. It implements [Hierarchical Localization](https://arxiv.org/abs/1812.03506), leveraging image retrieval and feature matching, and is fast, accurate, and scalable. This codebase won the indoor/outdoor localization challenges at [CVPR 2020](https://sites.google.com/view/vislocslamcvpr2020/home) and [ECCV 2020](https://sites.google.com/view/ltvl2020/), in combination with [SuperGlue](https://psarlin.com/superglue/), our graph neural network for feature matching.
+This is `hloc`, a modular toolbox for state-of-the-art 6-DoF visual localization. It implements [Hierarchical Localization](https://arxiv.org/abs/1812.03506), leveraging image retrieval and feature matching, and is fast, accurate, and scalable. This codebase combines and makes easily accessible years of research on image matching and Structure-from-Motion.
 
 With `hloc`, you can:
 
-- Reproduce [our CVPR 2020 winning results](https://www.visuallocalization.net/workshop/cvpr/2020/) on outdoor (Aachen) and indoor (InLoc) datasets
+- Reproduce state-of-the-art results on multiple indoor and outdoor visual localization benchmarks
 - Run Structure-from-Motion with SuperPoint+SuperGlue to localize with your own datasets
 - Evaluate your own local features or image retrieval for visual localization
 - Implement new localization pipelines and debug them easily 🔥
@@ -43,13 +43,13 @@ jupyter notebook --ip 0.0.0.0 --port 8888 --no-browser --allow-root
 
 The toolbox is composed of scripts, which roughly perform the following steps:
 
-1. Extract SuperPoint local features for all database and query images
+1. Extract local features, like [SuperPoint](https://arxiv.org/abs/1712.07629) or [DISK](https://arxiv.org/abs/2006.13566), for all database and query images
 2. Build a reference 3D SfM model
    1. Find covisible database images, with retrieval or a prior SfM model
-   2. Match these database pairs with SuperGlue
+   2. Match these database pairs with [SuperGlue](https://psarlin.com/superglue/) or the faster [LightGlue](https://github.com/cvg/LightGlue)
    3. Triangulate a new SfM model with COLMAP
 3. Find database images relevant to each query, using retrieval
-4. Match the query images with SuperGlue
+4. Match the query images
 5. Run the localization
 6. Visualize and debug
 
@@ -93,8 +93,8 @@ We show in [`pipeline_SfM.ipynb`](https://nbviewer.jupyter.org/github/cvg/Hierar
 
 ## Results
 
-- Supported local feature extractors: [SuperPoint](https://arxiv.org/abs/1712.07629), [D2-Net](https://arxiv.org/abs/1905.03561), [SIFT](https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf), and [R2D2](https://arxiv.org/abs/1906.06195).
-- Supported feature matchers: [SuperGlue](https://arxiv.org/abs/1911.11763) and nearest neighbor search with ratio test, distance test, and/or mutual check.
+- Supported local feature extractors: [SuperPoint](https://arxiv.org/abs/1712.07629), [DISK](https://arxiv.org/abs/2006.13566), [D2-Net](https://arxiv.org/abs/1905.03561), [SIFT](https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf), and [R2D2](https://arxiv.org/abs/1906.06195).
+- Supported feature matchers: [SuperGlue](https://arxiv.org/abs/1911.11763), its faster follow-up [LightGlue](https://github.com/cvg/LightGlue), and nearest neighbor search with ratio test, distance test, and/or mutual check. hloc also supports dense matching with [LoFTR](https://github.com/zju3dv/LoFTR).
 - Supported image retrieval: [NetVLAD](https://arxiv.org/abs/1511.07247), [AP-GeM/DIR](https://github.com/naver/deep-image-retrieval), [OpenIBL](https://github.com/yxgeee/OpenIBL), and [CosPlace](https://github.com/gmberton/CosPlace).
 
 Using NetVLAD for retrieval, we obtain the following best results:
@@ -183,6 +183,31 @@ In a match file, each key corresponds to the string `path0.replace('/', '-')+'_'
 <summary>[Click to expand]</summary>
 
 `hloc` also provides an interface for image retrieval via `hloc/extract_features.py`. As previously, simply add a new interface to [`hloc/extractors/`](hloc/extractors/). Alternatively, you will need to export the global descriptors into an HDF5 file, in which each key corresponds to the relative path of an image w.r.t. the dataset root, and contains a dataset `global_descriptor` with size D. You can then export the images pairs with [`hloc/pairs_from_retrieval.py`](hloc/pairs_from_retrieval.py).
+</details>
+
+### Reconstruction with known camera parameters
+
+<details>
+<summary>[Click to expand]</summary>
+
+If the calibration of the camera is known, for example from an external calibration system, you can tell hloc to use these parameters instead of estimating them from EXIF. The name of the camera models and their parameters are [defined by COLMAP](https://colmap.github.io/cameras.html). Python API:
+```python
+opts = dict(camera_model='SIMPLE_RADIAL', camera_params=','.join(map(str, (f, cx, cy, k))))
+model = reconstruction.main(..., image_options=opts)
+```
+Command-line interface:
+```bash
+python -m hloc.reconstruction [...] --image_options camera_model='"SIMPLE_RADIAL"' camera_params='"256,256,256,0"'
+```
+
+By default, hloc refines the camera parameters during the reconstruction process. To prevent this, add:
+```python
+reconstruction.main(..., mapper_options=dict(ba_refine_focal_length=False, ba_refine_extra_params=False))
+```
+```bash
+python -m hloc.reconstruction [...] --mapper_options ba_refine_focal_length=False ba_refine_extra_params=False
+```
+
 </details>
 
 ## Versions
