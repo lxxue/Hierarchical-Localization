@@ -311,7 +311,7 @@ def main(
             # print(pred["keypoints"].shape, keypoint_mask.shape, valid_keypoint.shape)
             pred["keypoints"] = pred["keypoints"][keypoint_mask][valid_keypoint > 0]
             pred["descriptors"] = pred["descriptors"][:, keypoint_mask][:, valid_keypoint > 0]
-            pred["scores"] = pred["scores"][keypoint_mask][valid_keypoint > 0]
+            # pred["scores"] = pred["scores"][keypoint_mask][valid_keypoint > 0]
 
         if as_half:
             for k in pred:
