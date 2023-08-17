@@ -529,7 +529,7 @@ def main(conf: Dict,
          features: Optional[Path] = None,  # out
          features_ref: Optional[Path] = None,
          max_kps: Optional[int] = 8192,
-         overwrite: bool = False) -> Path:
+         overwrite: bool = False):
     logger.info('Extracting semi-dense features with configuration:'
                 f'\n{pprint.pformat(conf)}')
 
