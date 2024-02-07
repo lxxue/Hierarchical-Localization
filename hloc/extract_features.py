@@ -130,9 +130,9 @@ confs = {
         "model": {"name": "openibl"},
         "preprocessing": {"resize_max": 1024},
     },
-    "cosplace": {
-        "output": "global-feats-cosplace",
-        "model": {"name": "cosplace"},
+    "eigenplaces": {
+        "output": "global-feats-eigenplaces",
+        "model": {"name": "eigenplaces"},
         "preprocessing": {"resize_max": 1024},
     },
 }
@@ -172,13 +172,12 @@ class ImageDataset(torch.utils.data.Dataset):
         if paths is None:
             paths = []
             for g in conf.globs:
-                paths += glob.glob(
-                    (Path(root) / '**' / g).as_posix(), recursive=True)
+                paths += glob.glob((Path(root) / "**" / g).as_posix(), recursive=True)
             if len(paths) == 0:
-                raise ValueError(f'Could not find any image in root: {root}.')
+                raise ValueError(f"Could not find any image in root: {root}.")
             paths = sorted(set(paths))
             self.names = [Path(p).relative_to(root).as_posix() for p in paths]
-            logger.info(f'Found {len(self.names)} images in root {root}.')
+            logger.info(f"Found {len(self.names)} images in root {root}.")
         else:
             if isinstance(paths, (Path, str)):
                 self.names = parse_image_lists(paths)
