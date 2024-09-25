@@ -4,15 +4,25 @@ import random
 import numpy as np
 import pycolmap
 from matplotlib import cm
+from matplotlib import pyplot as plt
+from tqdm import tqdm
 
 from .utils.io import read_image
-from .utils.viz import add_text, cm_RdGn, plot_images, plot_keypoints, plot_matches
+from .utils.viz import (
+    add_text,
+    cm_RdGn,
+    plot_images,
+    plot_keypoints,
+    plot_matches,
+    save_plot,
+)
 
 
 def visualize_sfm_2d(
     reconstruction, image_dir, color_by="visibility", selected=[], n=1, seed=0, dpi=75
 ):
     assert image_dir.exists()
+    reconstruction_dir = reconstruction
     if not isinstance(reconstruction, pycolmap.Reconstruction):
         reconstruction = pycolmap.Reconstruction(reconstruction)
 
@@ -20,7 +30,7 @@ def visualize_sfm_2d(
         image_ids = reconstruction.reg_image_ids()
         selected = random.Random(seed).sample(image_ids, min(n, len(image_ids)))
 
-    for i in selected:
+    for i in tqdm(selected):
         image = reconstruction.images[i]
         keypoints = np.array([p.xy for p in image.points2D])
         visible = np.array([p.has_point3D() for p in image.points2D])
@@ -31,9 +41,7 @@ def visualize_sfm_2d(
         elif color_by == "track_length":
             tl = np.array(
                 [
-                    reconstruction.points3D[p.point3D_id].track.length()
-                    if p.has_point3D()
-                    else 1
+                    reconstruction.points3D[p.point3D_id].track.length() if p.has_point3D() else 1
                     for p in image.points2D
                 ]
             )
@@ -61,6 +69,9 @@ def visualize_sfm_2d(
         plot_keypoints([keypoints], colors=[color], ps=4)
         add_text(0, text)
         add_text(0, name, pos=(0.01, 0.01), fs=5, lcolor=None, va="bottom")
+        stem = name[: name.rfind(".")]
+        save_plot(reconstruction_dir / ".." / ".." / "visualization" / f"sfm_2d_{stem}.jpg")
+        plt.close("all")
 
 
 def visualize_loc(
@@ -91,9 +102,7 @@ def visualize_loc(
 
     for qname in selected:
         loc = logs["loc"][qname]
-        visualize_loc_from_log(
-            image_dir, qname, loc, reconstruction, db_image_dir, **kwargs
-        )
+        visualize_loc_from_log(image_dir, qname, loc, reconstruction, db_image_dir, **kwargs)
 
 
 def visualize_loc_from_log(
