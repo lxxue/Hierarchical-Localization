@@ -5,6 +5,7 @@ import numpy as np
 import pycolmap
 from matplotlib import cm
 from matplotlib import pyplot as plt
+from sympy import im
 from tqdm import tqdm
 
 from .utils.io import read_image
@@ -28,8 +29,11 @@ def visualize_sfm_2d(
 
     if not selected:
         image_ids = reconstruction.reg_image_ids()
-        selected = random.Random(seed).sample(image_ids, min(n, len(image_ids)))
+        # selected = random.Random(seed).sample(image_ids, min(n, len(image_ids)))
+        selected = sorted(image_ids)
 
+    output_dir = reconstruction_dir / ".." / ".." / "visualization" / "sfm_2d"
+    output_dir.mkdir(parents=True, exist_ok=True)
     for i in tqdm(selected):
         image = reconstruction.images[i]
         keypoints = np.array([p.xy for p in image.points2D])
@@ -52,13 +56,13 @@ def visualize_sfm_2d(
         elif color_by == "depth":
             p3ids = [p.point3D_id for p in image.points2D if p.has_point3D()]
             z = np.array(
-                [
-                    (image.cam_from_world * reconstruction.points3D[j].xyz)[-1]
-                    for j in p3ids
-                ]
+                [(image.cam_from_world * reconstruction.points3D[j].xyz)[-1] for j in p3ids]
             )
-            z -= z.min()
-            color = cm.jet(z / np.percentile(z, 99.9))
+            print(z.min(), z.max())
+            color = cm.jet((z - 5) / 15)
+            # continue
+            # z -= z.min()
+            # color = cm.jet(z / np.percentile(z, 90))
             text = f"visible: {np.count_nonzero(visible)}/{len(visible)}"
             keypoints = keypoints[visible]
         else:
@@ -70,7 +74,7 @@ def visualize_sfm_2d(
         add_text(0, text)
         add_text(0, name, pos=(0.01, 0.01), fs=5, lcolor=None, va="bottom")
         stem = name[: name.rfind(".")]
-        save_plot(reconstruction_dir / ".." / ".." / "visualization" / f"sfm_2d_{stem}.jpg")
+        save_plot(output_dir / f"{stem}.jpg")
         plt.close("all")
 
 
